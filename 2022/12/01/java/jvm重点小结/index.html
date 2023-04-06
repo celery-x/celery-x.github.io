@@ -1,0 +1,825 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Zod">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="阅读《深入理解Java虚拟机》后，对其中的重点部分进行一下简单的总结提炼">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Jvm重点小结">
+<meta property="og:url" content="http://blog.superxuqc.top/2022/12/01/java/jvm%E9%87%8D%E7%82%B9%E5%B0%8F%E7%BB%93/index.html">
+<meta property="og:site_name" content="Zod Blog">
+<meta property="og:description" content="阅读《深入理解Java虚拟机》后，对其中的重点部分进行一下简单的总结提炼">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.superxuqc.top/img/java/java-face.gif">
+<meta property="article:published_time" content="2022-12-01T06:37:24.000Z">
+<meta property="article:modified_time" content="2023-03-30T06:43:51.095Z">
+<meta property="article:author" content="SuperXuQc">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="jvm">
+<meta property="article:tag" content="读书笔记">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://blog.superxuqc.top/img/java/java-face.gif">
+  
+  
+  
+  <title>Jvm重点小结 - Zod Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.superxuqc.top","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Zod</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Jvm重点小结"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-12-01 14:37" pubdate>
+          2022年12月1日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          29 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Jvm重点小结</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>主要从三个方向：GC、类加载器、并发来总结。</p>
+<h1 id="一、JVM是什么"><a href="#一、JVM是什么" class="headerlink" title="一、JVM是什么"></a>一、JVM是什么</h1><p><img src="/img/java/jvm1.png" srcset="/img/loading.gif" lazyload></p>
+<p>屏蔽底层具体实现的区别，提供统一的API给开发者使用。</p>
+<p>对于开发者来说，无论是什么平台，实现某一功能的方式完全相同。</p>
+<h1 id="二、JVM内存模型"><a href="#二、JVM内存模型" class="headerlink" title="二、JVM内存模型"></a>二、JVM内存模型</h1><p><img src="/img/java/jvm2.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="1-堆（Heap）"><a href="#1-堆（Heap）" class="headerlink" title="1.堆（Heap）"></a>1.堆（Heap）</h2><p><img src="/img/java/jvm3.png" srcset="/img/loading.gif" lazyload></p>
+<p>堆是gc的主要场所。详情会在后文gc部分描述。</p>
+<h2 id="2-方法区"><a href="#2-方法区" class="headerlink" title="2.方法区"></a>2.方法区</h2><p><img src="/img/java/jvm4.png" srcset="/img/loading.gif" lazyload></p>
+<p>方法区在1.8之后改名为元数据区</p>
+<p>方法区（Method Area）与Java堆一样，是各个线程共享的内存区域，它用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等数据。</p>
+<h2 id="3-虚拟机栈-JVM-Stack"><a href="#3-虚拟机栈-JVM-Stack" class="headerlink" title="3.虚拟机栈(JVM Stack)"></a>3.虚拟机栈(JVM Stack)</h2><p><img src="/img/java/jvm5.png" srcset="/img/loading.gif" lazyload></p>
+<p>虚拟机栈（Java Virtual Machine Stack），早期也叫Java栈，每个线程在创建时都会创建一个虚拟机栈，其内部保存一个个的栈帧（Stack Frame），对应着一次次的Java方法调用。</p>
+<h2 id="4-本地方法栈-Native-Stack"><a href="#4-本地方法栈-Native-Stack" class="headerlink" title="4.本地方法栈(Native Stack)"></a>4.本地方法栈(Native Stack)</h2><p>本地方法栈（Native Method Stacks）与虚拟机栈所发挥的作用是非常相似的，其区别不过是虚拟机栈为虚拟机执行Java 方法（也就是字节码）服务，而本地方法栈则是为虚拟机使用到的Native 方法服务。</p>
+<p>虚拟机规范中对本地方法栈中的方法使用的语言、使用方式与数据结构并没有强制规定，因此具体的虚拟机可以自由实现它。</p>
+<p>甚至有的虚拟机（譬如Sun HotSpot 虚拟机）直接就把本地方法栈和虚拟机栈合二为一。</p>
+<p>与虚拟机栈一样，本地方法栈区域也会抛出StackOverflowError 和OutOfMemoryError异常。</p>
+<h2 id="5-程序计数器（PC-Register）"><a href="#5-程序计数器（PC-Register）" class="headerlink" title="5.程序计数器（PC Register）"></a>5.程序计数器（PC Register）</h2><p>在JVM的概念模型里，字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令。</p>
+<p>分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。</p>
+<p>JVM的多线程是通过线程轮流切换并分配处理器执行时间的方式来实现的，为了各条线程之间的切换后计数器能恢复到正确的执行位置，所以每条线程都会有一个独立的程序计数器。</p>
+<p>当线程正在执行一个Java方法，程序计数器记录的是正在执行的JVM字节码指令的地址；如果正在执行的是一个Natvie（本地方法），那么这个计数器的值则为空（Underfined）。</p>
+<p>程序计数器占用的内存空间很少，也是唯一一个在JVM规范中没有规定任何OutOfMemoryError（内存不足错误）的区域。</p>
+<h1 id="三、GC过程"><a href="#三、GC过程" class="headerlink" title="三、GC过程"></a>三、GC过程</h1><h2 id="1-堆结构"><a href="#1-堆结构" class="headerlink" title="1.堆结构"></a>1.堆结构</h2><p><img src="/img/java/jvm6.png" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs powershell">分为 年轻代和老年代<br>        年轻代分为 伊甸区和幸存区<br>        每经历一次<span class="hljs-built_in">GC</span>，年龄+<span class="hljs-number">1</span>，<span class="hljs-number">15</span>岁晋升老年代<br>    <span class="hljs-built_in">GC</span>规则为：<br>        Minor <span class="hljs-built_in">GC</span>： 年轻代<span class="hljs-built_in">GC</span><br>            如果年龄大于<span class="hljs-number">15</span>，会上升老年代<br>            如果已经为垃圾对象，清楚<br>            剩下的进入幸存区<br>            若幸存区不够放下此对象，直接晋升老年代<br>          TIPS：动态年龄判断：<br>                    若幸存区中的对象，大于某个年龄的对象大于空间一半，则大于等于该年龄的晋升老年代<br>                空间分配担保：<br>                    如果没开此配置，晋升时会计算历次晋升对象的平均总大小，若大于老年代剩余空间，则进行full <span class="hljs-built_in">GC</span><br>                    若开了 只会进行minor <span class="hljs-built_in">GC</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h2 id="2-如何判断对象是否应该回收"><a href="#2-如何判断对象是否应该回收" class="headerlink" title="2.如何判断对象是否应该回收"></a>2.如何判断对象是否应该回收</h2><figure class="highlight xquery"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs xquery">古老的：<br>    引用计数法，对象每有一个引用，计数器+<span class="hljs-number">1</span>，收集计数器为<span class="hljs-number">0</span>的对象<br> <span class="hljs-built_in"></span><br><span class="hljs-built_in">root</span>根搜索方法：<br>   <span class="hljs-built_in"> root</span>对象作为起点向下搜索，当一个对象<span class="hljs-built_in">到root</span>没有任何引用链时，可回收。<br>   <span class="hljs-built_in"> root</span>对象：<br>        栈内存中引用的对象<br>        静态或常量引用的对象<br>        被bootstrap加载器加载创建的对象<br>        native方法中JNI引用的对象<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-垃圾回收算法"><a href="#3-垃圾回收算法" class="headerlink" title="3.垃圾回收算法"></a>3.垃圾回收算法</h2><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs powershell">标记-清除：先标记所有被引用的对象，然后再遍历一次将没有标记的清除<br> <br>复制： 内存划分两块。每次使用一块，每次<span class="hljs-built_in">GC</span>，遍历当前区，把被引用的对象复制到另一区。<br> <br>标记-整理：先标记所有被引用的对象，然后遍历删除没有被标记的对象，同时把被标记的对象压缩到一起，按顺序摆放。<br></code></pre></td></tr></table></figure>
+
+<h2 id="4-垃圾回收器"><a href="#4-垃圾回收器" class="headerlink" title="4.垃圾回收器"></a>4.垃圾回收器</h2><table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="left">适用范围</th>
+<th align="left">特点</th>
+<th align="left">算法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Serial</td>
+<td align="left">年轻代</td>
+<td align="left">单线程、STW</td>
+<td align="left">复制</td>
+</tr>
+<tr>
+<td align="left">Serial Old</td>
+<td align="left">老年代</td>
+<td align="left">单线程、STW</td>
+<td align="left">标记整理</td>
+</tr>
+<tr>
+<td align="left">ParNew</td>
+<td align="left">年轻代</td>
+<td align="left">多线程、与Serial类似</td>
+<td align="left">复制</td>
+</tr>
+<tr>
+<td align="left">Paralle Scavenge</td>
+<td align="left">年轻代</td>
+<td align="left">多线程、吞吐量优先</td>
+<td align="left">复制</td>
+</tr>
+<tr>
+<td align="left">Paralle Ole</td>
+<td align="left">老年代</td>
+<td align="left">多线程、吞吐量优先</td>
+<td align="left">标记整理</td>
+</tr>
+<tr>
+<td align="left">CMS</td>
+<td align="left">老年代</td>
+<td align="left">低停顿</td>
+<td align="left">标记清除</td>
+</tr>
+<tr>
+<td align="left">G1</td>
+<td align="left">全部</td>
+<td align="left"></td>
+<td align="left">局部是复制、整体是标记整理</td>
+</tr>
+</tbody></table>
+<h2 id="5-jdk1-8所使用的垃圾回收器"><a href="#5-jdk1-8所使用的垃圾回收器" class="headerlink" title="5.jdk1.8所使用的垃圾回收器"></a>5.jdk1.8所使用的垃圾回收器</h2><blockquote>
+<p>-XX:+UseParallelGC</p>
+</blockquote>
+<p>使用Paralle Scavenge + Serial Old的组合进行垃圾回收。</p>
+<p><img src="/img/java/jvm7.png" srcset="/img/loading.gif" lazyload></p>
+<p>在进行GC时会Stop The World。</p>
+<h1 id="四、类加载机制"><a href="#四、类加载机制" class="headerlink" title="四、类加载机制"></a>四、类加载机制</h1><h2 id="1-类加载过程"><a href="#1-类加载过程" class="headerlink" title="1.类加载过程"></a>1.类加载过程</h2><p><img src="/img/java/jvm8.png" srcset="/img/loading.gif" lazyload></p>
+<p>简单来说：</p>
+<p>加载：将文件读入内存</p>
+<p>验证：确定class中的信息符合虚拟机要求</p>
+<p>准备：将类变量即静态变量初始化，赋予零值</p>
+<p>解析：将符号引用变为直接引用（指针、相对偏移量或者句柄）</p>
+<p>初始化：执行类构造器，对类变量进行赋予初值</p>
+<h2 id="2-类加载器"><a href="#2-类加载器" class="headerlink" title="2.类加载器"></a>2.类加载器</h2><p><img src="/img/java/jvm9.png" srcset="/img/loading.gif" lazyload></p>
+<p>bootstrap classLoader启动类加载器： 对应安装jre里面的rt.jar包中的类</p>
+<p>extention classLoader 扩展类加载器： 从java.ext.dirs系统属性所指定的目录中加载类库,或从JDK的安装目录的jre&#x2F;lib&#x2F;ext子目录(扩展目录)下加载类库。</p>
+<p>App classLoader 应用类加载器：就是平时写代码，一般都经过应用类加载器。</p>
+<p><strong>双亲委派机制：</strong></p>
+<p>双亲委派机制是<code>指当一个类加载器收到一个类加载请求时,该类加载器首先会把请求委派给父类加载器</code>。</p>
+<p><img src="/img/java/jvm10.png" srcset="/img/loading.gif" lazyload></p>
+<p>首先判断该类是否已经加载</p>
+<p>未加载判断是否有父加载器，交给父加载器执行</p>
+<p>如果直到Bootstrap 加载器仍未加载过该类，则从上往下加载该类</p>
+<p> 优点：</p>
+<p>1.避免了类的重复加载</p>
+<p>2.保护了程序的安全性，防止核心的API被修改</p>
+<h1 id="五、高效并发"><a href="#五、高效并发" class="headerlink" title="五、高效并发"></a>五、高效并发</h1><h2 id="1-内存访问规则"><a href="#1-内存访问规则" class="headerlink" title="1.内存访问规则"></a>1.内存访问规则</h2><p><img src="/img/java/jvm11.png" srcset="/img/loading.gif" lazyload></p>
+<p>java变量都储存在主内存中，每个线程有自己的工作内存，会将使用到的变量拷贝到工作内存中，每个线程只能操作工作内存中的变量，无法直接操作主内存中的变量。</p>
+<h1 id="2-volatile关键字"><a href="#2-volatile关键字" class="headerlink" title="2.volatile关键字"></a>2.volatile关键字</h1><ol>
+<li>线程的可见性：当一个线程修改一个共享变量时，另外一个线程能读到这个修改的值。</li>
+<li>顺序一致性：禁止指令重排序。</li>
+</ol>
+<p>但其无法保证操作的原子性，即无法保证线程安全。</p>
+<p><strong>volatile是如何保证可见性的呢？</strong><br>在X86处理器下通过工具获取JIT编译器生成的汇编指令来查看对volatile进行写操作时，会多出lock addl。Lock前缀的指令在多核处理器下会引发两件事情：</p>
+<ol>
+<li><p>将当前处理器缓存行的数据写回到系统内存。</p>
+</li>
+<li><p>这个写回内存的操作会使其他cpu里缓存了该内存地址的数据无效。</p>
+</li>
+</ol>
+<h2 id="3-锁相关"><a href="#3-锁相关" class="headerlink" title="3.锁相关"></a>3.锁相关</h2><p><img src="/img/java/jvm12.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="乐观锁、悲观锁"><a href="#乐观锁、悲观锁" class="headerlink" title="乐观锁、悲观锁"></a>乐观锁、悲观锁</h2><p>悲观锁：认为自己在使用数据的时候一定有别的线程来修改数据，因此在获取数据的时候会先加锁，确保数据不会被别的线程修改。Java中，synchronized关键字和Lock的实现类都是悲观锁。</p>
+<p>乐观锁：</p>
+<p>认为自己在使用数据时不会有别的线程修改数据，所以不会添加锁，只是在更新数据的时候去判断之前有没有别的线程更新了这个数据。如果这个数据没有被更新，当前线程将自己修改的数据成功写入。如果数据已经被其他线程更新，则根据不同的实现方式执行不同的操作（例如报错或者自动重试）。</p>
+<p>乐观锁在Java中是通过使用无锁编程来实现，最常采用的是CAS算法，Java原子类中的递增操作就通过CAS自旋实现的。</p>
+<p>CAS：</p>
+<p>CAS算法涉及到三个操作数：</p>
+<ul>
+<li>需要读写的内存值 V。</li>
+<li>进行比较的值 A。</li>
+<li>要写入的新值 B。</li>
+</ul>
+<p>在进行写入B时判断当前值是否等于A，如果不等于A则不写入。</p>
+<h2 id="自旋锁、适应性自旋锁"><a href="#自旋锁、适应性自旋锁" class="headerlink" title="自旋锁、适应性自旋锁"></a>自旋锁、适应性自旋锁</h2><p>背景：很多场景下，资源被锁定的时间很短，而线程的挂起恢复很耗性能，如果可以以等待合理的时间换来避免线程挂起恢复，可能性能更优。</p>
+<p>自旋锁：在尝试获取锁失败时不放弃CPU时间片，尝试等待锁释放。</p>
+<p>自旋锁的实现原理同样也是CAS，AtomicInteger中调用unsafe进行自增操作的源码中的do-while循环就是一个自旋操作，如果修改数值失败则通过循环来执行自旋，直至修改成功。</p>
+<p><img src="/img/java/jvm13.png" srcset="/img/loading.gif" lazyload></p>
+<p>自适应意味着自旋的时间（次数）不再固定，而是由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定。如果在同一个锁对象上，自旋等待刚刚成功获得过锁，并且持有锁的线程正在运行中，那么虚拟机就会认为这次自旋也是很有可能再次成功，进而它将允许自旋等待持续相对更长的时间。如果对于某个锁，自旋很少成功获得过，那在以后尝试获取这个锁时将可能省略掉自旋过程，直接阻塞线程，避免浪费处理器资源。</p>
+<h2 id="synchronized锁升级"><a href="#synchronized锁升级" class="headerlink" title="synchronized锁升级"></a>synchronized锁升级</h2><p><img src="/img/java/jvm14.png" srcset="/img/loading.gif" lazyload></p>
+<p>当只有一个线程访问时，会使用偏向锁，不做同步处理。</p>
+<p>当再有线程访问时，就会升级为轻量级锁，自旋使用CAS来获取锁。</p>
+<p>当竞争大到一定程度就会升级为重量级锁，未获取锁的线程就会进入阻塞态。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/java/" class="category-chain-item">java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/java/">#java</a>
+      
+        <a href="/tags/jvm/">#jvm</a>
+      
+        <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">#读书笔记</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Jvm重点小结</div>
+      <div>http://blog.superxuqc.top/2022/12/01/java/jvm重点小结/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Zod</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年12月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/02/20/java/ForkJoinPool/" title="ForkJoinPool">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">ForkJoinPool</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/10/11/java/%E6%97%A5%E5%BF%97%E6%A1%86%E6%9E%B6%E2%80%94%E2%80%94%E4%BB%A5Slf4j%E4%B8%BA%E6%A0%B8%E5%BF%83/" title="日志框架——以Slf4j为核心">
+                        <span class="hidden-mobile">日志框架——以Slf4j为核心</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="twikoo"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/twikoo/1.6.8/twikoo.all.min.js', function() {
+        var options = Object.assign(
+          {"envId":"https://twikoo-zeabur-production-6357.up.railway.app","region":"ap-shanghai","path":"window.location.pathname"},
+          {
+            el: '#twikoo',
+            path: 'window.location.pathname',
+            onCommentLoaded: function() {
+              var imgSelector = '#twikoo .tk-content img:not(.tk-owo-emotion)';
+              Fluid.plugins.imageCaption(imgSelector);
+              Fluid.plugins.fancyBox(imgSelector);
+            }
+          }
+        )
+        twikoo.init(options)
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

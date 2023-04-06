@@ -1,0 +1,730 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Zod">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="dubbo调用出现AccessControlException异常如何解决以及产生原因">
+<meta property="og:type" content="article">
+<meta property="og:title" content="开启java.security.manager后出现AccessControlException异常">
+<meta property="og:url" content="http://blog.superxuqc.top/2023/03/01/dubbo/%E5%BC%80%E5%90%AFjava-security-manager%E5%90%8E%E5%87%BA%E7%8E%B0AccessControlException%E5%BC%82%E5%B8%B8/index.html">
+<meta property="og:site_name" content="Zod Blog">
+<meta property="og:description" content="dubbo调用出现AccessControlException异常如何解决以及产生原因">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.superxuqc.top/img/dubbo/AccessControlException-face.png">
+<meta property="article:published_time" content="2023-03-01T02:28:14.000Z">
+<meta property="article:modified_time" content="2023-03-30T03:40:36.004Z">
+<meta property="article:author" content="SuperXuQc">
+<meta property="article:tag" content="dubbo">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://blog.superxuqc.top/img/dubbo/AccessControlException-face.png">
+  
+  
+  
+  <title>开启java.security.manager后出现AccessControlException异常 - Zod Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.superxuqc.top","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Zod</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="开启java.security.manager后出现AccessControlException异常"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-01 10:28" pubdate>
+          2023年3月1日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          9.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          76 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">开启java.security.manager后出现AccessControlException异常</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="0-相关问题"><a href="#0-相关问题" class="headerlink" title="0.相关问题"></a>0.相关问题</h1><p>在使用dubbo时，出现以下异常</p>
+<p>cause: org.apache.dubbo.remoting.RemotingException: java.security.AccessControlException: access denied (“java.util.PropertyPermission” “serialization.security.check” “read”)</p>
+<p>java.security.AccessControlException: access denied (“java.util.PropertyPermission” “dubbo.cache.router” “read”)</p>
+<h4 id="快速解决："><a href="#快速解决：" class="headerlink" title="快速解决："></a>快速解决：</h4><p>使用AccessController.doPrivilege包裹dubbo调用</p>
+<h6 id="例如："><a href="#例如：" class="headerlink" title="例如："></a>例如：</h6><p>原代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">String</span> <span class="hljs-variable">s</span> <span class="hljs-operator">=</span> helloService.sayHello(Thread.currentThread().getName());<br></code></pre></td></tr></table></figure>
+
+<p>修改后的代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-type">String</span> <span class="hljs-variable">s</span> <span class="hljs-operator">=</span> AccessController.doPrivileged(<span class="hljs-keyword">new</span> <span class="hljs-title class_">PrivilegedAction</span>&lt;String&gt;() &#123;<br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">run</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> helloService.sayHello(Thread.currentThread().getName());<br>    &#125;<br>&#125;);<br></code></pre></td></tr></table></figure>
+
+
+
+<h1 id="1-原因"><a href="#1-原因" class="headerlink" title="1.原因"></a>1.原因</h1><p>当开启了安全管理器时，常用方式为添加JVM参数-Djava.security.manager，在进行部分操作时，会检查当前保护域是否有该权限。</p>
+<p>比较常见的是使用了某些公共线程池，比如：</p>
+<h6 id="ForkJoinPool-commonPool-submit-forkJoinAction"><a href="#ForkJoinPool-commonPool-submit-forkJoinAction" class="headerlink" title="ForkJoinPool.commonPool().submit(forkJoinAction);"></a>ForkJoinPool.commonPool().submit(forkJoinAction);</h6><p>类的描述为：（直接查看源码可见）</p>
+<figure class="highlight vbnet"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs vbnet">An ExecutorService <span class="hljs-keyword">for</span> running ForkJoinTasks. A ForkJoinPool provides the entry point <span class="hljs-keyword">for</span> submissions <span class="hljs-keyword">from</span> non-ForkJoinTask clients, <span class="hljs-keyword">as</span> well <span class="hljs-keyword">as</span> management <span class="hljs-built_in">and</span> monitoring operations.<br>A ForkJoinPool differs <span class="hljs-keyword">from</span> other kinds <span class="hljs-keyword">of</span> ExecutorService mainly <span class="hljs-keyword">by</span> virtue <span class="hljs-keyword">of</span> employing work-stealing: all threads <span class="hljs-keyword">in</span> the pool attempt <span class="hljs-keyword">to</span> find <span class="hljs-built_in">and</span> execute tasks submitted <span class="hljs-keyword">to</span> the pool <span class="hljs-built_in">and</span>/<span class="hljs-built_in">or</span> created <span class="hljs-keyword">by</span> other active tasks (eventually blocking waiting <span class="hljs-keyword">for</span> work <span class="hljs-keyword">if</span> none exist). This enables efficient processing <span class="hljs-keyword">when</span> most tasks spawn other subtasks (<span class="hljs-keyword">as</span> <span class="hljs-keyword">do</span> most ForkJoinTasks), <span class="hljs-keyword">as</span> well <span class="hljs-keyword">as</span> <span class="hljs-keyword">when</span> many small tasks are submitted <span class="hljs-keyword">to</span> the pool <span class="hljs-keyword">from</span> external clients. Especially <span class="hljs-keyword">when</span> setting asyncMode <span class="hljs-keyword">to</span> <span class="hljs-literal">true</span> <span class="hljs-keyword">in</span> constructors, ForkJoinPools may also be appropriate <span class="hljs-keyword">for</span> use <span class="hljs-keyword">with</span> <span class="hljs-keyword">event</span>-style tasks that are never joined.<br>A <span class="hljs-keyword">static</span> commonPool() <span class="hljs-built_in">is</span> available <span class="hljs-built_in">and</span> appropriate <span class="hljs-keyword">for</span> most applications. The common pool <span class="hljs-built_in">is</span> used <span class="hljs-keyword">by</span> any ForkJoinTask that <span class="hljs-built_in">is</span> <span class="hljs-built_in">not</span> explicitly submitted <span class="hljs-keyword">to</span> a specified pool. <span class="hljs-keyword">Using</span> the common pool normally reduces resource usage (its threads are slowly reclaimed during periods <span class="hljs-keyword">of</span> non-use, <span class="hljs-built_in">and</span> reinstated upon subsequent use).<br><span class="hljs-keyword">For</span> applications that require separate <span class="hljs-built_in">or</span> <span class="hljs-keyword">custom</span> pools, a ForkJoinPool may be constructed <span class="hljs-keyword">with</span> a given target parallelism level; <span class="hljs-keyword">by</span> <span class="hljs-keyword">default</span>, equal <span class="hljs-keyword">to</span> the number <span class="hljs-keyword">of</span> available processors. The pool attempts <span class="hljs-keyword">to</span> maintain enough active (<span class="hljs-built_in">or</span> available) threads <span class="hljs-keyword">by</span> dynamically adding, suspending, <span class="hljs-built_in">or</span> resuming internal worker threads, even <span class="hljs-keyword">if</span> some tasks are stalled waiting <span class="hljs-keyword">to</span> <span class="hljs-keyword">join</span> others. However, no such adjustments are guaranteed <span class="hljs-keyword">in</span> the face <span class="hljs-keyword">of</span> blocked I/O <span class="hljs-built_in">or</span> other unmanaged synchronization. The nested ForkJoinPool.ManagedBlocker <span class="hljs-keyword">interface</span> enables extension <span class="hljs-keyword">of</span> the kinds <span class="hljs-keyword">of</span> synchronization accommodated.<br><span class="hljs-keyword">In</span> addition <span class="hljs-keyword">to</span> execution <span class="hljs-built_in">and</span> lifecycle control methods, this <span class="hljs-keyword">class</span> provides status check methods (<span class="hljs-keyword">for</span> example getStealCount) that are intended <span class="hljs-keyword">to</span> aid <span class="hljs-keyword">in</span> developing, tuning, <span class="hljs-built_in">and</span> monitoring fork/<span class="hljs-keyword">join</span> applications. Also, method toString returns indications <span class="hljs-keyword">of</span> pool state <span class="hljs-keyword">in</span> a convenient form <span class="hljs-keyword">for</span> informal monitoring.<br><span class="hljs-keyword">As</span> <span class="hljs-built_in">is</span> the <span class="hljs-keyword">case</span> <span class="hljs-keyword">with</span> other ExecutorServices, there are three main task execution methods summarized <span class="hljs-keyword">in</span> the following table. These are designed <span class="hljs-keyword">to</span> be used primarily <span class="hljs-keyword">by</span> clients <span class="hljs-built_in">not</span> already engaged <span class="hljs-keyword">in</span> fork/<span class="hljs-keyword">join</span> computations <span class="hljs-keyword">in</span> the current pool. The main forms <span class="hljs-keyword">of</span> these methods accept instances <span class="hljs-keyword">of</span> ForkJoinTask, but overloaded forms also allow mixed execution <span class="hljs-keyword">of</span> plain Runnable- <span class="hljs-built_in">or</span> Callable- based activities <span class="hljs-keyword">as</span> well. However, tasks that are already executing <span class="hljs-keyword">in</span> a pool should normally instead use the within-computation forms listed <span class="hljs-keyword">in</span> the table unless <span class="hljs-keyword">using</span> <span class="hljs-keyword">async</span> <span class="hljs-keyword">event</span>-style tasks that are <span class="hljs-built_in">not</span> usually joined, <span class="hljs-keyword">in</span> which <span class="hljs-keyword">case</span> there <span class="hljs-built_in">is</span> little difference among choice <span class="hljs-keyword">of</span> methods.<br>Summary <span class="hljs-keyword">of</span> task execution methods<br><br><span class="hljs-keyword">Call</span> <span class="hljs-keyword">from</span> non-fork/<span class="hljs-keyword">join</span> clients<br><span class="hljs-keyword">Call</span> <span class="hljs-keyword">from</span> within fork/<span class="hljs-keyword">join</span> computations<br>Arrange <span class="hljs-keyword">async</span> execution<br>execute(ForkJoinTask)<br>ForkJoinTask.fork<br><span class="hljs-built_in">Await</span> <span class="hljs-built_in">and</span> obtain result<br>invoke(ForkJoinTask)<br>ForkJoinTask.invoke<br>Arrange exec <span class="hljs-built_in">and</span> obtain Future<br>submit(ForkJoinTask)<br>ForkJoinTask.fork (ForkJoinTasks are Futures)<br>The common pool <span class="hljs-built_in">is</span> <span class="hljs-keyword">by</span> <span class="hljs-keyword">default</span> constructed <span class="hljs-keyword">with</span> <span class="hljs-keyword">default</span> parameters, but these may be controlled <span class="hljs-keyword">by</span> setting three system properties:<br>java.util.concurrent.ForkJoinPool.common.parallelism - the parallelism level, a non-negative <span class="hljs-type">integer</span><br>java.util.concurrent.ForkJoinPool.common.threadFactory - the <span class="hljs-keyword">class</span> name <span class="hljs-keyword">of</span> a ForkJoinPool.ForkJoinWorkerThreadFactory<br>java.util.concurrent.ForkJoinPool.common.exceptionHandler - the <span class="hljs-keyword">class</span> name <span class="hljs-keyword">of</span> a Thread.UncaughtExceptionHandler<br><span class="hljs-keyword">If</span> a SecurityManager <span class="hljs-built_in">is</span> present <span class="hljs-built_in">and</span> no factory <span class="hljs-built_in">is</span> specified, <span class="hljs-keyword">then</span> the <span class="hljs-keyword">default</span> pool uses a factory supplying threads that have no Permissions enabled. The system <span class="hljs-keyword">class</span> loader <span class="hljs-built_in">is</span> used <span class="hljs-keyword">to</span> load these classes. Upon any <span class="hljs-keyword">error</span> <span class="hljs-keyword">in</span> establishing these settings, <span class="hljs-keyword">default</span> parameters are used. It <span class="hljs-built_in">is</span> possible <span class="hljs-keyword">to</span> disable <span class="hljs-built_in">or</span> limit the use <span class="hljs-keyword">of</span> threads <span class="hljs-keyword">in</span> the common pool <span class="hljs-keyword">by</span> setting the parallelism <span class="hljs-keyword">property</span> <span class="hljs-keyword">to</span> zero, <span class="hljs-built_in">and</span>/<span class="hljs-built_in">or</span> <span class="hljs-keyword">using</span> a factory that may <span class="hljs-keyword">return</span> null. However doing so may cause unjoined tasks <span class="hljs-keyword">to</span> never be executed.<br>Implementation notes: This implementation restricts the maximum number <span class="hljs-keyword">of</span> running threads <span class="hljs-keyword">to</span> <span class="hljs-number">32767</span>. Attempts <span class="hljs-keyword">to</span> create pools <span class="hljs-keyword">with</span> greater than the maximum number result <span class="hljs-keyword">in</span> IllegalArgumentException.<br>This implementation rejects submitted tasks (that <span class="hljs-built_in">is</span>, <span class="hljs-keyword">by</span> throwing RejectedExecutionException) only <span class="hljs-keyword">when</span> the pool <span class="hljs-built_in">is</span> shut down <span class="hljs-built_in">or</span> internal resources have been exhausted.<br><span class="hljs-symbol">Since:</span><br><span class="hljs-number">1.7</span><br><span class="hljs-symbol">Author:</span><br>Doug Lea<br></code></pre></td></tr></table></figure>
+
+<p>注意此句：</p>
+<p>If a SecurityManager is present and no factory is specified, then the default pool uses a factory supplying threads that have no Permissions enabled.</p>
+<p>如果存在SecurityManager且没有指定工厂，则默认池使用工厂提供没有启用权限的线程。</p>
+<p><strong>所以默认情况下，commonPool是没有任何权限的线程池，将任务提交到该线程池，就会出现权限检查不通过的错误。</strong></p>
+<p><strong>解决方式即使用Java提供的方法，使用原调用方权限</strong></p>
+<p>AccessController.doPrivilege的相关内容为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Performs the specified &#123;<span class="hljs-doctag">@code</span> PrivilegedAction&#125; with privileges</span><br><span class="hljs-comment"> * enabled. The action is performed with &lt;i&gt;all&lt;/i&gt; of the permissions</span><br><span class="hljs-comment"> * possessed by the caller&#x27;s protection domain.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * &lt;p&gt; If the action&#x27;s &#123;<span class="hljs-doctag">@code</span> run&#125; method throws an (unchecked)</span><br><span class="hljs-comment"> * exception, it will propagate through this method.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * &lt;p&gt; Note that any DomainCombiner associated with the current</span><br><span class="hljs-comment"> * AccessControlContext will be ignored while the action is performed.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@param</span> &lt;T&gt; the type of the value returned by the PrivilegedAction&#x27;s</span><br><span class="hljs-comment"> *                  &#123;<span class="hljs-doctag">@code</span> run&#125; method.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@param</span> action the action to be performed.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@return</span> the value returned by the action&#x27;s &#123;<span class="hljs-doctag">@code</span> run&#125; method.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@exception</span> NullPointerException if the action is &#123;<span class="hljs-doctag">@code</span> null&#125;</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@see</span> #doPrivileged(PrivilegedAction,AccessControlContext)</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@see</span> #doPrivileged(PrivilegedExceptionAction)</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@see</span> #doPrivilegedWithCombiner(PrivilegedAction)</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@see</span> java.security.DomainCombiner</span><br><span class="hljs-comment"> */</span><br><br><span class="hljs-meta">@CallerSensitive</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">native</span> &lt;T&gt; T <span class="hljs-title function_">doPrivileged</span><span class="hljs-params">(PrivilegedAction&lt;T&gt; action)</span>;<br></code></pre></td></tr></table></figure>
+
+<p>注意这句话：Performs the specified with privileges enabled. The action is performed with of the permissions possessed by the caller’s protection domain.</p>
+<p><strong>以启用特权的方式执行指定的。该操作是使用调用方保护域所拥有的权限执行的。</strong></p>
+<p><strong>为了理解doPrivilege的行为，进行以下测试：</strong></p>
+<p>NoPermissionTools为无任何权限的类</p>
+<p>1.无权限验证</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java">		<span class="hljs-type">Runnable</span> <span class="hljs-variable">thread1</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Runnable</span>() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span><span class="hljs-params">()</span> &#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-type">String</span> <span class="hljs-variable">appName</span> <span class="hljs-operator">=</span> System.getProperty(<span class="hljs-string">&quot;app.name&quot;</span>);<br>                    System.out.println(appName);<br>                &#125;<span class="hljs-keyword">catch</span> (Exception e)&#123;<br>                    System.out.println(e.getMessage());<br>                &#125;<br>            &#125;<br>        &#125;;<br>        NoPermissionTools.submit(thread1);<br><br>结果为：<br>access <span class="hljs-title function_">denied</span> <span class="hljs-params">(<span class="hljs-string">&quot;java.util.PropertyPermission&quot;</span> <span class="hljs-string">&quot;app.name&quot;</span> <span class="hljs-string">&quot;read&quot;</span>)</span><br></code></pre></td></tr></table></figure>
+
+<p>2.包裹doPrivileged</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs typescript">		<span class="hljs-title class_">Runnable</span> thread2 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Runnable</span>() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-keyword">public</span> <span class="hljs-built_in">void</span> <span class="hljs-title function_">run</span>(<span class="hljs-params"></span>) &#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">AccessController</span>.<span class="hljs-title function_">doPrivileged</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">PrivilegedAction</span>&lt;<span class="hljs-title class_">String</span>&gt;() &#123;<br>                        <span class="hljs-meta">@Override</span><br>                        <span class="hljs-keyword">public</span> <span class="hljs-title class_">String</span> <span class="hljs-title function_">run</span>(<span class="hljs-params"></span>) &#123;<br>                            <span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">System</span>.<span class="hljs-title function_">getProperty</span>(<span class="hljs-string">&quot;app.name&quot;</span>);<br>                            <span class="hljs-keyword">return</span> appName;<br>                        &#125;<br>                    &#125;);<br>                    <span class="hljs-title class_">System</span>.<span class="hljs-property">out</span>.<span class="hljs-title function_">println</span>(<span class="hljs-string">&quot;use doPrivileged: &quot;</span> + appName);<br>                &#125;<span class="hljs-keyword">catch</span> (<span class="hljs-title class_">Exception</span> e)&#123;<br>                    <span class="hljs-title class_">System</span>.<span class="hljs-property">out</span>.<span class="hljs-title function_">println</span>(<span class="hljs-string">&quot;use doPrivileged: &quot;</span> + e.<span class="hljs-title function_">getMessage</span>());<br>                &#125;<br><br>            &#125;<br>        &#125;;<br>        <span class="hljs-title class_">NoPermissionTools</span>.<span class="hljs-title function_">submit</span>(thread2);<br><br>结果为：<br>use <span class="hljs-attr">doPrivileged</span>: <span class="hljs-title class_">SecurityTest</span><br></code></pre></td></tr></table></figure>
+
+<p>3.测试doPrivileged的传递性</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs typescript">		<span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">AccessController</span>.<span class="hljs-title function_">doPrivileged</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">PrivilegedAction</span>&lt;<span class="hljs-title class_">String</span>&gt;() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-keyword">public</span> <span class="hljs-title class_">String</span> <span class="hljs-title function_">run</span>(<span class="hljs-params"></span>) &#123;<br>                <span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">NoPermissionTools</span>.<span class="hljs-title function_">getAppName</span>();<br>                <span class="hljs-keyword">return</span> appName;<br>            &#125;<br>        &#125;);<br>        <span class="hljs-title class_">System</span>.<span class="hljs-property">out</span>.<span class="hljs-title function_">println</span>(appName);<br><br><br><br>org.<span class="hljs-property">example</span>.<span class="hljs-property">NoPermissionTools</span>#getAppName<br><br>	<span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-title class_">String</span> <span class="hljs-title function_">getAppName</span>(<span class="hljs-params"></span>)&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-title class_">System</span>.<span class="hljs-title function_">getProperty</span>(<span class="hljs-string">&quot;app.name&quot;</span>);<br>    &#125;<br><br>结果：<span class="hljs-title class_">Exception</span> <span class="hljs-keyword">in</span> thread <span class="hljs-string">&quot;main&quot;</span> java.<span class="hljs-property">security</span>.<span class="hljs-property">AccessControlException</span>: access denied (<span class="hljs-string">&quot;java.util.PropertyPermission&quot;</span> <span class="hljs-string">&quot;app.name&quot;</span> <span class="hljs-string">&quot;read&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>4测试基于谁的权限</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs typescript">org.<span class="hljs-property">example</span>.<span class="hljs-property">NoPermissionTools</span>#getAppName<br>	<span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-title class_">String</span> <span class="hljs-title function_">getAppName</span>(<span class="hljs-params"></span>)&#123;<br>        <span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">AccessController</span>.<span class="hljs-title function_">doPrivileged</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">PrivilegedAction</span>&lt;<span class="hljs-title class_">String</span>&gt;() &#123;<br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-keyword">public</span> <span class="hljs-title class_">String</span> <span class="hljs-title function_">run</span>(<span class="hljs-params"></span>) &#123;<br>                <span class="hljs-title class_">String</span> appName = <span class="hljs-title class_">System</span>.<span class="hljs-title function_">getProperty</span>(<span class="hljs-string">&quot;app.name&quot;</span>);<br>                <span class="hljs-keyword">return</span> appName;<br>            &#125;<br>        &#125;);<br>        <span class="hljs-keyword">return</span> appName;<br>    &#125;<br><br>结果：<br><span class="hljs-title class_">Exception</span> <span class="hljs-keyword">in</span> thread <span class="hljs-string">&quot;main&quot;</span> java.<span class="hljs-property">security</span>.<span class="hljs-property">AccessControlException</span>: access denied (<span class="hljs-string">&quot;java.util.PropertyPermission&quot;</span> <span class="hljs-string">&quot;app.name&quot;</span> <span class="hljs-string">&quot;read&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>5.理论上consumer接口也应该同理，验证：</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs pgsql">		<span class="hljs-keyword">System</span>.setProperty(&quot;app.name&quot;,&quot;SecurityTest&quot;);<br>        NoPermissionTools.run(<span class="hljs-built_in">new</span> Consumer() &#123;<br>            @Override<br>            <span class="hljs-built_in">public</span> <span class="hljs-type">void</span> accept(<span class="hljs-keyword">Object</span> o) &#123;<br>                String property = <span class="hljs-keyword">System</span>.getProperty(&quot;app.name&quot;);<br>                <span class="hljs-keyword">System</span>.<span class="hljs-keyword">out</span>.println(property);<br>            &#125;<br>        &#125;);<br><br><br>org.example.NoPermissionTools#run<br>    <span class="hljs-built_in">public</span> static <span class="hljs-type">void</span> run(Consumer consumer)&#123;<br>        consumer.accept(&quot;1&quot;);<br>    &#125;<br><br>结果：<br><span class="hljs-keyword">Exception</span> <span class="hljs-keyword">in</span> thread &quot;main&quot; java.<span class="hljs-keyword">security</span>.AccessControlException: <span class="hljs-keyword">access</span> denied (&quot;java.util.PropertyPermission&quot; &quot;app.name&quot; &quot;read&quot;)<br></code></pre></td></tr></table></figure>
+
+<p>6.当都没有权限时</p>
+<p>将权限配置取消，结果：</p>
+<p>use doPrivileged: access denied (“java.util.PropertyPermission” “<a target="_blank" rel="noopener" href="http://app.name/">app.name</a>“ “read”)</p>
+<p>基于测试结果可知：</p>
+<p>一、使用<strong>调用方权限，</strong>如A→B → doPrivileged，指的是调用doPrivileged代码所在class的权限，即B，而不是A。（通过4）</p>
+<p>二、权限无法传递，如A→ doPrivileged → B，B中进行的需要权限的操作依旧无法使用A的权限。（通过3）</p>
+<p>三、该方法只能实现将在A中进行的操作交给B执行时，B中无权限使用A的权限。而无法实现执行A、B都无权限的操作。（通过6）</p>
+<p>所以该方法是无法越过安全检查的，究根到底，进行高权限操作代码必须在拥有权限的Class里。只是在某些情况下需要将这部分代码交给别的模块执行，在别的模块没有权限的情况下，可以使用doPrivileged获得权限。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/dubbo/" class="category-chain-item">dubbo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/dubbo/">#dubbo</a>
+      
+        <a href="/tags/java/">#java</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>开启java.security.manager后出现AccessControlException异常</div>
+      <div>http://blog.superxuqc.top/2023/03/01/dubbo/开启java-security-manager后出现AccessControlException异常/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Zod</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/03/07/dubbo/dubbo%E6%B3%A8%E8%A7%A3%E7%9A%84%E5%8F%82%E6%95%B0%E8%A7%A3%E6%9E%90/" title="dubbo注解的参数解析">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">dubbo注解的参数解析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/02/27/dubbo/Dubbo%E5%9C%A8Springboot%E4%B8%8B%E6%9C%8D%E5%8A%A1%E6%96%B9%E5%92%8C%E6%B6%88%E8%B4%B9%E6%96%B9%E7%9A%84%E4%BF%A1%E6%81%AF%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA/" title="Dubbo在Springboot下服务方和消费方的信息注册时机">
+                        <span class="hidden-mobile">Dubbo在Springboot下服务方和消费方的信息注册时机</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="twikoo"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/twikoo/1.6.8/twikoo.all.min.js', function() {
+        var options = Object.assign(
+          {"envId":"https://twikoo-zeabur-production-6357.up.railway.app","region":"ap-shanghai","path":"window.location.pathname"},
+          {
+            el: '#twikoo',
+            path: 'window.location.pathname',
+            onCommentLoaded: function() {
+              var imgSelector = '#twikoo .tk-content img:not(.tk-owo-emotion)';
+              Fluid.plugins.imageCaption(imgSelector);
+              Fluid.plugins.fancyBox(imgSelector);
+            }
+          }
+        )
+        twikoo.init(options)
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

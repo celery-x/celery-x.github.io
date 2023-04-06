@@ -1,0 +1,735 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/avatar.png">
+  <link rel="icon" href="/img/avatar.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Zod">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Dubbo是如何结合springboot完成自动装配的？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dubbo在Springboot下服务方和消费方的信息注册时机">
+<meta property="og:url" content="http://blog.superxuqc.top/2023/02/27/dubbo/Dubbo%E5%9C%A8Springboot%E4%B8%8B%E6%9C%8D%E5%8A%A1%E6%96%B9%E5%92%8C%E6%B6%88%E8%B4%B9%E6%96%B9%E7%9A%84%E4%BF%A1%E6%81%AF%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA/index.html">
+<meta property="og:site_name" content="Zod Blog">
+<meta property="og:description" content="Dubbo是如何结合springboot完成自动装配的？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://blog.superxuqc.top/img/dubbo/%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA-face.png">
+<meta property="article:published_time" content="2023-02-27T11:56:38.000Z">
+<meta property="article:modified_time" content="2023-03-30T03:40:36.009Z">
+<meta property="article:author" content="SuperXuQc">
+<meta property="article:tag" content="dubbo">
+<meta property="article:tag" content="spring">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://blog.superxuqc.top/img/dubbo/%E6%B3%A8%E5%86%8C%E6%97%B6%E6%9C%BA-face.png">
+  
+  
+  
+  <title>Dubbo在Springboot下服务方和消费方的信息注册时机 - Zod Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.superxuqc.top","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Zod</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Dubbo在Springboot下服务方和消费方的信息注册时机"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-02-27 19:56" pubdate>
+          2023年2月27日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          37 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Dubbo在Springboot下服务方和消费方的信息注册时机</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="1-QA"><a href="#1-QA" class="headerlink" title="1.QA"></a>1.QA</h1><h5 id="关于原理-必须保证什么条件，服务方才会进行暴露？"><a href="#关于原理-必须保证什么条件，服务方才会进行暴露？" class="headerlink" title="关于原理.必须保证什么条件，服务方才会进行暴露？"></a>关于原理.必须保证什么条件，服务方才会进行暴露？</h5><p>以下两点必须全部满足</p>
+<p>1.注入Spring中的bean为ServiceBean。</p>
+<p>2.服务暴露入口类注入到了spring中。</p>
+<h5 id="关于原理-必须保证什么条件，消费方才会进行暴露？"><a href="#关于原理-必须保证什么条件，消费方才会进行暴露？" class="headerlink" title="关于原理.必须保证什么条件，消费方才会进行暴露？"></a>关于原理.必须保证什么条件，消费方才会进行暴露？</h5><p>满足一下两点其一即可</p>
+<p>1.作为ReferenceBean注入，且显示开启饿汉模式，即reference的配置init为true（通过consumer配置无效）。</p>
+<p>2.作为ReferenceBean注入，在任意bean中作为依赖进行了依赖注入。</p>
+<h5 id="关于一-为什要调整自动装配-x2F-添加注解？"><a href="#关于一-为什要调整自动装配-x2F-添加注解？" class="headerlink" title="关于一.为什要调整自动装配&#x2F;添加注解？"></a>关于一.为什要调整自动装配&#x2F;添加注解？</h5><p>因为发现有业务的自动装配是自己实现的，而升级dubbo后，原本部分入口类类注入的逻辑进行了修改，整合到了autoconfigure中，导致没引入新autoconfigure模块会不注入相关类。</p>
+<p>至于添加@EnableDubbo注解其实就是手动进行入口类的注入。</p>
+<h5 id="关于二-为什么使用-DubboService的方式，要配置扫描路径？"><a href="#关于二-为什么使用-DubboService的方式，要配置扫描路径？" class="headerlink" title="关于二.为什么使用@DubboService的方式，要配置扫描路径？"></a>关于二.为什么使用@DubboService的方式，要配置扫描路径？</h5><p>DubboService注解其实只是个标注，通过包扫描路径的配置，才会去扫描这些被标注的类，然后将这些类的bean包装成ServiceBean。</p>
+<h5 id="关于二-为什么使用-DubboService的方式，配置了扫描路径还不行？"><a href="#关于二-为什么使用-DubboService的方式，配置了扫描路径还不行？" class="headerlink" title="关于二.为什么使用@DubboService的方式，配置了扫描路径还不行？"></a>关于二.为什么使用@DubboService的方式，配置了扫描路径还不行？</h5><p>其实也有前提是自动装配依赖正确，否则配置文件添加dubbo.scan.base-packages可能不生效，因为读取相关配置功能在autoconfigure中开启。</p>
+<p>dubbo.scan.base-packages或@DubboComponentScan配置后，DubboComponentScan的处理类里也会进行开启服务暴露相关类的注入（如果依赖正确，autoconfigure里就会进行注入）。</p>
+<h1 id="2-源码解析"><a href="#2-源码解析" class="headerlink" title="2.源码解析"></a>2.源码解析</h1><h5 id="一、服务暴露"><a href="#一、服务暴露" class="headerlink" title="一、服务暴露"></a>一、服务暴露</h5><p>ServiceBean如何与普通Bean区分开？<br>ServiceBean的继承关系</p>
+<p><img src="/img/dubbo/ServiceBean%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" srcset="/img/loading.gif" lazyload></p>
+<p>在抽象父类AbstractConfig中，有一个PostConstruct方法，会将自身加到一个静态变量中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@PostConstruct</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">addIntoConfigManager</span><span class="hljs-params">()</span> &#123;<br>ApplicationModel.getConfigManager().addConfig(<span class="hljs-built_in">this</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>这个静态变量所在类为：org.apache.dubbo.config.context.ConfigManager</p>
+<p>这个类管理了Dubbo框架内所有的配置信息，包括provider、cosnumer、service、reference、protocol等</p>
+<p>那么ConfigManager中的Service配置被谁获取使用呢？<br>在Dubbo的启动类DubboBootstrap中</p>
+<p>org.apache.dubbo.config.bootstrap.DubboBootstrap#start</p>
+<p>—org.apache.dubbo.config.bootstrap.DubboBootstrap#exportServices</p>
+<p>会从ConfigManager的中获取所有的Services进行暴露</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">exportServices</span><span class="hljs-params">()</span> &#123;<br>configManager.getServices().forEach(sc -&gt; &#123;...&#125;);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>最后问题就来到了Bootstarp的start方法在什么时候触发？<br>在一个监听器中</p>
+<p>org.apache.dubbo.config.spring.context.DubboBootstrapApplicationListener</p>
+<p>在监听到对应事件后，会执行start方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">onContextRefreshedEvent</span><span class="hljs-params">(ContextRefreshedEvent event)</span> &#123;<br>dubboBootstrap.start();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<p>综上所述，在Springboot场景下，服务如果想暴露，必须将自己作为ServiceBean注入且DubboBootstrapApplicationListener注册进spring。<br>ServiceBean可以自己手动包装、注入，也可以借助于@DubboService、@DubboComponentScan</p>
+<p>DubboBootstrapApplicationListener的注册入口有很多，许多Dubbo的入口注解、自动装配类都会进行注册。</p>
+<p>二、为什么消费方可以注册上来？<br>同样的思路，从org.apache.dubbo.config.spring.ReferenceBean开始看</p>
+<p><img src="/img/dubbo/ReferenceBean%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" srcset="/img/loading.gif" lazyload></p>
+<p>ReferenceBean同样实现了AbstractConfig，会把自己添加到配置管理器中，但他并不依赖于Bootstrap读取配置暴露。详见下文。</p>
+<p>ReferenceBean实现了InitializingBean</p>
+<p>默认在这里是不会加载的，默认是懒加载，但是如果显示制定了init，那么在此处就会执行服务引入，将消费者注册上去</p>
+<p>org.apache.dubbo.config.spring.ReferenceBean#afterPropertiesSet</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Override</span><br><span class="hljs-meta">@SuppressWarnings(&#123;&quot;unchecked&quot;&#125;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">afterPropertiesSet</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br><span class="hljs-comment">//先把一些配置准备好</span><br><span class="hljs-comment">// Initializes Dubbo&#x27;s Config Beans before @Reference bean autowiring</span><br>prepareDubboConfigBeans();<br><span class="hljs-comment">//默认懒加载</span><br><span class="hljs-comment">// lazy init by default.</span><br><span class="hljs-keyword">if</span> (init == <span class="hljs-literal">null</span>) &#123;<br>init = <span class="hljs-literal">false</span>;<br>&#125;<br><br>   <span class="hljs-comment">// eager init if necessary.</span><br>   <span class="hljs-keyword">if</span> (shouldInit()) &#123;<br>    <span class="hljs-comment">//饿汉模式直接调用初始化方法</span><br>        getObject();<br>   &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>tips:这里的逻辑其实只有reference显示制定了init才会生效，即通过consumer配置init无效。</p>
+<p>if (init &#x3D;&#x3D; null) { init &#x3D; false; }这里会在init为null时默认置为false，而在shouldInit()中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">//此处取init的值</span><br><span class="hljs-type">Boolean</span> <span class="hljs-variable">shouldInit</span> <span class="hljs-operator">=</span> isInit();<br><span class="hljs-comment">//为null且consumer不为空时采用consumer的init属性</span><br><span class="hljs-keyword">if</span> (shouldInit == <span class="hljs-literal">null</span> &amp;&amp; getConsumer() != <span class="hljs-literal">null</span>) &#123;<br>shouldInit = getConsumer().isInit();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>而从之前的代码可知，如果为null，必定会被置为false，所以这里根本走不到<br>那么默认是懒加载，为什么启动时，什么都没做就注册上去了？</p>
+<p>那肯定是因为使用了相关的依赖注入，无论是什么方式在别的bean中注入了ReferenceBean，都会执行org.springframework.beans.factory.FactoryBean#getObject方法，就是上面提到的饿汉模式直接调用的方法</p>
+<p>而在ReferenceBean中的实现方法是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> Object <span class="hljs-title function_">getObject</span><span class="hljs-params">()</span> &#123;<br><span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.get();<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">synchronized</span> T <span class="hljs-title function_">get</span><span class="hljs-params">()</span> &#123;<br><span class="hljs-keyword">if</span> (<span class="hljs-built_in">this</span>.destroyed) &#123;<br><span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IllegalStateException</span>(<span class="hljs-string">&quot;The invoker of ReferenceConfig(&quot;</span> + <span class="hljs-built_in">this</span>.url + <span class="hljs-string">&quot;) has already destroyed!&quot;</span>);<br>&#125; <span class="hljs-keyword">else</span> &#123;<br><span class="hljs-keyword">if</span> (<span class="hljs-built_in">this</span>.ref == <span class="hljs-literal">null</span>) &#123;<br><span class="hljs-built_in">this</span>.init();<br>&#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.ref;<br>&#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>org.apache.dubbo.config.ReferenceConfig#init 进行一些配置的加载，提供给后续拼接成消费方url，即consumer:&#x2F;&#x2F;…</p>
+<p>—org.apache.dubbo.config.ReferenceConfig#createProxy</p>
+<p>—REF_PROTOCOL.refer 在此处进行消费方的注册</p>
+<p>那么如果只注入了bean，没有在任何地方以任何形式引入，消费者还会注册吗？<br>答案是不会。</p>
+<p>在DubboBootstrap中，处理ConfigManager中的reference配置的方法</p>
+<p>可以看到，这里依旧判断是懒加载的话，不会执行初始化</p>
+<p>而我们上面知道，如果是饿汉模式的，在bean初始化的时候实现InitializingBean，就会初始化了。所以其实bootstrap里的这个方法，在本文这场景都没有进行注册消费方的操作。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">referServices</span><span class="hljs-params">()</span> &#123;<br><span class="hljs-keyword">if</span> (<span class="hljs-built_in">this</span>.cache == <span class="hljs-literal">null</span>) &#123;<br><span class="hljs-built_in">this</span>.cache = ReferenceConfigCache.getCache();<br>&#125;<br><br><span class="hljs-built_in">this</span>.configManager.getReferences().forEach((rc) -&gt; &#123;<br>    <span class="hljs-type">ReferenceConfig</span> <span class="hljs-variable">referenceConfig</span> <span class="hljs-operator">=</span> (ReferenceConfig)rc;<br>    referenceConfig.setBootstrap(<span class="hljs-built_in">this</span>);<br>    <span class="hljs-keyword">if</span> (rc.shouldInit()) &#123;<br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">this</span>.referAsync) &#123;<br>            CompletableFuture&lt;Object&gt; future = ScheduledCompletableFuture.submit(<span class="hljs-built_in">this</span>.executorRepository.getServiceExporterExecutor(), () -&gt; &#123;<br>                <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.cache.get(rc);<br>            &#125;);<br>            <span class="hljs-built_in">this</span>.asyncReferringFutures.add(future);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-built_in">this</span>.cache.get(rc);<br>        &#125;<br>    &#125;<br><br>&#125;);<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/dubbo/" class="category-chain-item">dubbo</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/dubbo/">#dubbo</a>
+      
+        <a href="/tags/spring/">#spring</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Dubbo在Springboot下服务方和消费方的信息注册时机</div>
+      <div>http://blog.superxuqc.top/2023/02/27/dubbo/Dubbo在Springboot下服务方和消费方的信息注册时机/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Zod</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年2月27日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/03/01/dubbo/%E5%BC%80%E5%90%AFjava-security-manager%E5%90%8E%E5%87%BA%E7%8E%B0AccessControlException%E5%BC%82%E5%B8%B8/" title="开启java.security.manager后出现AccessControlException异常">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">开启java.security.manager后出现AccessControlException异常</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/02/21/dubbo/dubbo%E5%A6%82%E4%BD%95%E6%8C%87%E5%AE%9A%E6%B3%A8%E5%86%8C%E7%9A%84ip/" title="dubbo如何指定注册的ip">
+                        <span class="hidden-mobile">dubbo如何指定注册的ip</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="twikoo"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/twikoo/1.6.8/twikoo.all.min.js', function() {
+        var options = Object.assign(
+          {"envId":"https://twikoo-zeabur-production-6357.up.railway.app","region":"ap-shanghai","path":"window.location.pathname"},
+          {
+            el: '#twikoo',
+            path: 'window.location.pathname',
+            onCommentLoaded: function() {
+              var imgSelector = '#twikoo .tk-content img:not(.tk-owo-emotion)';
+              Fluid.plugins.imageCaption(imgSelector);
+              Fluid.plugins.fancyBox(imgSelector);
+            }
+          }
+        )
+        twikoo.init(options)
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
